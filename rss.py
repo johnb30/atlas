@@ -108,7 +108,18 @@ def _convert_url(url, website):
     return page_url
 
 
-def main():
+def process_whitelist(filepath):
+    url_whitelist = open(filepath, 'r').readlines()
+    url_whitelist = [line.replace('\n', '').split(',') for line in
+                     url_whitelist if line]
+    #Filtering based on list of sources from the config file
+    to_scrape = {listing[0]: [listing[1], listing[3]] for listing in
+                 url_whitelist if listing[2] in sources}
+
+    return to_scrape
+
+
+def main(scrape_dict):
     print 'Main func.'
 
 if __name__ == '__main__':
@@ -137,12 +148,7 @@ if __name__ == '__main__':
 
     #Convert from CSV of URLs to a dictionary
     try:
-        url_whitelist = open(whitelist_file, 'r').readlines()
-        url_whitelist = [line.replace('\n', '').split(',') for line in
-                         url_whitelist if line]
-        #Filtering based on list of sources from the config file
-        to_scrape = {listing[0]: [listing[1], listing[3]] for listing in
-                     url_whitelist if listing[2] in sources}
+        to_scrape = process_whitelist(whitelist_file)
     except IOError:
         print 'There was an error. Check the log file for more information.'
         logger.warning('Could not open URL whitelist file.')

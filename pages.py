@@ -1,8 +1,25 @@
 import scrape
+#TODO: Setup logging
 import logging
 import utilities
 import mongo_connection
 from goose import Goose
+
+
+def main():
+    channel = utilities.make_queue()
+    channel.basic_qos(prefetch_count=1)
+    channel.basic_consume(callback, queue='scraper_queue')
+    channel.start_consuming()
+
+
+def callback(ch, method, properties, body):
+    global coll
+    print " [x] Received {}".format(body['url'])
+    parse_results(body['url'], body['website'], body['lang'], coll)
+    print ' \tParsed URL.'
+
+    ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
 def parse_results(story_url, website, lang, db_collection):
@@ -40,21 +57,28 @@ def parse_results(story_url, website, lang, db_collection):
         text, meta = scrape.scrape(story_url, goose_extractor)
         text = text.encode('utf-8')
     except TypeError:
-        logger.warning('Problem obtaining text from URL: {}'.format(page_url))
+        print 'Problem obtaining text from URL: {}'.format(story_url)
+        #logger.warning('Problem obtaining text from URL: {}'.format(story_url))
         text = ''
 
     if text:
         cleaned_text = _clean_text(text, website)
 
+        #TODO: Figure out where the title, URL, and date should come from
+        #TODO: Might want to pull title straight from the story since the RSS
+        #feed is borked sometimes.
         entry_id = mongo_connection.add_entry(db_collection, cleaned_text,
-                                              result.title, result.url,
+                                              result.title, story_url,
                                               result.date, website, lang)
         if entry_id:
             try:
-                logger.info('Added entry from {} with id {}'.format(page_url,
-                                                                    entry_id))
+                print 'Added entry from {} with id {}'.format(story_url,
+                                                              entry_id)
+                #logger.info('Added entry from {} with id {}'.format(story_url,
+                #                                                    entry_id))
             except UnicodeDecodeError:
-                logger.info('Added entry from {}. Unicode error for id'.format(result.url))
+                print 'Added entry from {}. Unicode error for id'.format(story_url)
+                #logger.info('Added entry from {}. Unicode error for id'.format(result.url))
 
 
 def _clean_text(text, website):
@@ -98,10 +122,7 @@ def _clean_text(text, website):
     return text
 
 
-def main():
-    print 'Main func.'
-
-
 if __name__ == '__main__':
     db_collection, whitelist_file, sources, pool_size, log_dir, log_level, auth_db, auth_user, auth_pass = utilities.parse_config()
+    coll = utilities.make_coll(db_collection, auth_db, auth_user, auth_pass)
     main()

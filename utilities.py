@@ -1,10 +1,11 @@
 import os
+import pika
 import glob
 from pymongo import MongoClient
 from ConfigParser import ConfigParser
 
 
-def make_conn(COLL, db_auth, db_user, db_pass):
+def make_coll(COLL, db_auth, db_user, db_pass):
     """
     Function to establish a connection to a local MonoDB instance.
 
@@ -36,7 +37,18 @@ def make_conn(COLL, db_auth, db_user, db_pass):
     return collection
 
 
+def make_queue():
+    connection = pika.BlockingConnection(pika.ConnectionParameters(
+        host='localhost'))
+    channel = connection.channel()
+
+    channel.queue_declare(queue='scraper_queue', durable=True)
+
+    return channel
+
+
 def parse_config():
+    #TODO: Put this out as a named tuple or two rather than 10 diff vars
     """Function to parse the config file."""
     config_file = glob.glob('config.ini')
     parser = ConfigParser()

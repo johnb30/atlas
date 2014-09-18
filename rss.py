@@ -36,7 +36,6 @@ def get_rss(address, website):
                                                            website))
     except Exception, e:
         print 'There was an error. Check the log file for more information.'
-        print e
         logger.warning('Problem fetching RSS feed for {}. {}'.format(address,
                                                                      e))
         results = None
@@ -46,7 +45,6 @@ def get_rss(address, website):
 
 def process_rss(rss_result, message_body, db_collection, message_queue):
     for result in rss_result:
-        print type(message_body)
         page_url = _convert_url(result.url, message_body['website'])
 
         in_database = _check_mongo(page_url, db_collection)
@@ -56,7 +54,6 @@ def process_rss(rss_result, message_body, db_collection, message_queue):
         message_body['url'] = page_url
 
         to_send = json.dumps(message_body)
-        print to_send
 
         if not in_database:
             message_queue.basic_publish(exchange='',

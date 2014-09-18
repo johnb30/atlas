@@ -18,8 +18,12 @@ def main():
 def callback(ch, method, properties, body):
     global coll
     body = json.loads(body)
-    print " [x] Received {}".format(body['url'])
-    parse_results(body, coll)
+    #TODO: This is bad
+    try:
+        print " [x] Received {}".format(body['url'])
+        parse_results(body, coll)
+    except UnicodeEncodeError:
+        pass
     print ' \tParsed URL.'
 
     ch.basic_ack(delivery_tag=method.delivery_tag)

@@ -1,0 +1,12 @@
+BeautifulSoup==3.2.1
+Pattern==2.6
+Pillow==2.5.3
+cssselect==0.9.1
+goose-extractor==1.0.22
+jieba==0.33
+lxml==3.4.0
+nltk==3.0.0
+pika==0.9.14
+pymongo==2.7.2
+requests==2.4.1
+wsgiref==0.1.2

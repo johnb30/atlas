@@ -1,4 +1,8 @@
+import pika
+import json
+import time
 import logging
+import datetime
 import pattern.web
 import utilities
 
@@ -32,6 +36,7 @@ def get_rss(address, website):
                                                            website))
     except Exception, e:
         print 'There was an error. Check the log file for more information.'
+        print e
         logger.warning('Problem fetching RSS feed for {}. {}'.format(address,
                                                                      e))
         results = None
@@ -39,33 +44,26 @@ def get_rss(address, website):
     return results
 
 
-def _check_mongo(url, db_collection):
-    """
-    Private function to check if a URL appears in the database.
+def process_rss(rss_result, message_body, db_collection, message_queue):
+    for result in rss_result:
+        print type(message_body)
+        page_url = _convert_url(result.url, message_body['website'])
 
-    Parameters
-    ----------
+        in_database = _check_mongo(page_url, db_collection)
 
-    url: String.
-            URL for the news stories to be scraped.
+        message_body['title'] = result.title
+        message_body['date'] = result.date
+        message_body['url'] = page_url
 
-    db_collection: pymongo Collection.
-                        Collection within MongoDB that in which results are
-                        stored.
+        to_send = json.dumps(message_body)
+        print to_send
 
-    Returns
-    -------
-
-    found: Boolean.
-            Indicates whether or not a URL was found in the database.
-    """
-
-    if db_collection.find_one({"url": url}):
-        found = True
-    else:
-        found = False
-
-    return found
+        if not in_database:
+            message_queue.basic_publish(exchange='',
+                                        routing_key='scraper_queue',
+                                        body=to_send,
+                                        properties=pika.BasicProperties(
+                                            delivery_mode=2,))
 
 
 def _convert_url(url, website):
@@ -108,6 +106,35 @@ def _convert_url(url, website):
     return page_url
 
 
+def _check_mongo(url, db_collection):
+    """
+    Private function to check if a URL appears in the database.
+
+    Parameters
+    ----------
+
+    url: String.
+            URL for the news stories to be scraped.
+
+    db_collection: pymongo Collection.
+                        Collection within MongoDB that in which results are
+                        stored.
+
+    Returns
+    -------
+
+    found: Boolean.
+            Indicates whether or not a URL was found in the database.
+    """
+
+    if db_collection.find_one({"url": url}):
+        found = True
+    else:
+        found = False
+
+    return found
+
+
 def process_whitelist(filepath):
     url_whitelist = open(filepath, 'r').readlines()
     url_whitelist = [line.replace('\n', '').split(',') for line in
@@ -119,8 +146,24 @@ def process_whitelist(filepath):
     return to_scrape
 
 
-def main(scrape_dict):
-    print 'Main func.'
+def main(scrape_dict, db_collection, db_auth, db_user, db_pass):
+    coll = utilities.make_coll(db_collection, db_auth, db_user, db_pass)
+    channel = utilities.make_queue()
+
+    while True:
+        logger.info('Starting a new scrape. {}'.format(datetime.datetime.now()))
+        for website, (address, lang) in scrape_dict.iteritems():
+            body = {'address': address, 'website': website, 'lang': lang}
+            results = get_rss(address, website)
+
+            if results:
+                process_rss(results, body, coll, channel)
+            else:
+                logger.warning('No results for {}.'.format(website))
+                pass
+        logger.info('Finished a scrape. {}'.format(datetime.datetime.now()))
+        time.sleep(2700)
+
 
 if __name__ == '__main__':
     #Get the info from the config
@@ -142,7 +185,7 @@ if __name__ == '__main__':
     fh.setFormatter(formatter)
 
     logger.addHandler(fh)
-    logger.info('Running in scheduled hourly mode')
+    logger.info('Running. Processing in 45 min intervals.')
 
     print 'Running. See log file for further information.'
 
@@ -153,5 +196,4 @@ if __name__ == '__main__':
         print 'There was an error. Check the log file for more information.'
         logger.warning('Could not open URL whitelist file.')
 
-    main()
-    logger.info('All done.')
+    main(to_scrape, db_collection, auth_db, auth_user, auth_pass)

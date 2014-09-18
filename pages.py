@@ -1,3 +1,5 @@
+import re
+import json
 import scrape
 #TODO: Setup logging
 import logging
@@ -15,14 +17,15 @@ def main():
 
 def callback(ch, method, properties, body):
     global coll
+    body = json.loads(body)
     print " [x] Received {}".format(body['url'])
-    parse_results(body['url'], body['website'], body['lang'], coll)
+    parse_results(body, coll)
     print ' \tParsed URL.'
 
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def parse_results(story_url, website, lang, db_collection):
+def parse_results(message, db_collection):
     """
     Function to parse the links drawn from an RSS feed.
 
@@ -42,6 +45,11 @@ def parse_results(story_url, website, lang, db_collection):
                         Collection within MongoDB that in which results are
                         stored.
     """
+    lang = message['lang']
+    story_url = message['url']
+    website = message['website']
+    title = message['title']
+    date = message['date']
     if lang == 'english':
         goose_extractor = Goose({'use_meta_language': False,
                                  'target_language': 'en',
@@ -68,8 +76,8 @@ def parse_results(story_url, website, lang, db_collection):
         #TODO: Might want to pull title straight from the story since the RSS
         #feed is borked sometimes.
         entry_id = mongo_connection.add_entry(db_collection, cleaned_text,
-                                              result.title, story_url,
-                                              result.date, website, lang)
+                                              title, story_url, date, website,
+                                              lang)
         if entry_id:
             try:
                 print 'Added entry from {} with id {}'.format(story_url,

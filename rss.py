@@ -150,6 +150,8 @@ def main(scrape_dict, db_collection, db_auth, db_user, db_pass):
     while True:
         logger.info('Starting a new scrape. {}'.format(datetime.datetime.now()))
         for website, (address, lang) in scrape_dict.iteritems():
+            logger.info('Processing {}. {}'.format(website,
+                                                   datetime.datetime.now()))
             body = {'address': address, 'website': website, 'lang': lang}
             results = get_rss(address, website)
 

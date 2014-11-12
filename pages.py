@@ -3,6 +3,7 @@ import json
 import scrape
 #TODO: Setup logging
 import logging
+import datetime
 import utilities
 import mongo_connection
 from goose import Goose
@@ -20,7 +21,8 @@ def callback(ch, method, properties, body):
     body = json.loads(body)
     #TODO: This is bad
     try:
-        print " [x] Received {}".format(body['url'])
+        print " [x] Received {}. {}".format(body['url'],
+                                            datetime.datetime.now())
         parse_results(body, coll)
     except UnicodeEncodeError:
         pass
@@ -84,8 +86,9 @@ def parse_results(message, db_collection):
                                               lang)
         if entry_id:
             try:
-                print 'Added entry from {} with id {}'.format(story_url,
-                                                              entry_id)
+                print 'Added entry from {} with id {}. {}.'.format(story_url,
+                                                                   entry_id,
+                                                                   datetime.datetime.now())
                 #logger.info('Added entry from {} with id {}'.format(story_url,
                 #                                                    entry_id))
             except UnicodeDecodeError:

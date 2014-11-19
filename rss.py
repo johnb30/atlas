@@ -144,8 +144,12 @@ def process_whitelist(filepath):
     return to_scrape
 
 
-def scrape_func(website, address, lang, coll, channel):
+def scrape_func(website, address, lang, db_collection, db_auth, db_user, db_pass):
     logger.info('Processing {}. {}'.format(website, datetime.datetime.now()))
+
+    coll = utilities.make_coll(db_collection, db_auth, db_user, db_pass)
+    channel = utilities.make_queue()
+
     body = {'address': address, 'website': website, 'lang': lang}
     results = get_rss(address, website)
 
@@ -157,16 +161,15 @@ def scrape_func(website, address, lang, coll, channel):
 
 
 def main(scrape_dict, db_collection, db_auth, db_user, db_pass):
-    coll = utilities.make_coll(db_collection, db_auth, db_user, db_pass)
-    channel = utilities.make_queue()
 
     pool = Pool(pool_size)
 
     while True:
         logger.info('Starting a new scrape. {}'.format(datetime.datetime.now()))
-        results = [pool.apply_async(scrape_func, (website, address, lang, coll,
-                                                  channel)) for website,
-                   (address, lang) in scrape_dict.iteritems()]
+        results = [pool.apply_async(scrape_func, (website, address, lang,
+                                                  db_collection, db_auth,
+                                                  db_user, db_pass)) for
+                   website, (address, lang) in scrape_dict.iteritems()]
         timeout = [r.get(9999999) for r in results]
         logger.info('Finished a scrape. {}'.format(datetime.datetime.now()))
         time.sleep(2700)

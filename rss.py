@@ -3,8 +3,9 @@ import json
 import time
 import logging
 import datetime
-import pattern.web
 import utilities
+import pattern.web
+from multiprocessing import Pool
 
 
 def get_rss(address, website):
@@ -143,23 +144,33 @@ def process_whitelist(filepath):
     return to_scrape
 
 
-def main(scrape_dict, db_collection, db_auth, db_user, db_pass):
+def scrape_func(website, address, lang, db_collection, db_auth, db_user, db_pass):
+    logger.info('Processing {}. {}'.format(website, datetime.datetime.now()))
+
     coll = utilities.make_coll(db_collection, db_auth, db_user, db_pass)
     channel = utilities.make_queue()
 
+    body = {'address': address, 'website': website, 'lang': lang}
+    results = get_rss(address, website)
+
+    if results:
+        process_rss(results, body, coll, channel)
+    else:
+        logger.warning('No results for {}.'.format(website))
+        pass
+
+
+def main(scrape_dict, db_collection, db_auth, db_user, db_pass):
+
+    pool = Pool(pool_size)
+
     while True:
         logger.info('Starting a new scrape. {}'.format(datetime.datetime.now()))
-        for website, (address, lang) in scrape_dict.iteritems():
-            logger.info('Processing {}. {}'.format(website,
-                                                   datetime.datetime.now()))
-            body = {'address': address, 'website': website, 'lang': lang}
-            results = get_rss(address, website)
-
-            if results:
-                process_rss(results, body, coll, channel)
-            else:
-                logger.warning('No results for {}.'.format(website))
-                pass
+        results = [pool.apply_async(scrape_func, (website, address, lang,
+                                                  db_collection, db_auth,
+                                                  db_user, db_pass)) for
+                   website, (address, lang) in scrape_dict.iteritems()]
+        timeout = [r.get(9999999) for r in results]
         logger.info('Finished a scrape. {}'.format(datetime.datetime.now()))
         time.sleep(2700)
 

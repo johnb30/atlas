@@ -40,6 +40,7 @@ def add_entry(collection, text, title, url, date, website, lang):
                 "date_added": datetime.datetime.utcnow(),
                 "content": text,
                 "stanford": 0,
+                "geo": 0,
                 "language": lang}
     object_id = collection.insert(toInsert)
     return object_id

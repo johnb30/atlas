@@ -1,6 +1,7 @@
 import os
 import pika
 import glob
+import redis
 from pymongo import MongoClient
 from ConfigParser import ConfigParser
 
@@ -35,6 +36,12 @@ def make_coll(COLL, db_auth, db_user, db_pass):
     collection = db[COLL]
 
     return collection
+
+
+def make_redis():
+    r = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+    return r
 
 
 def make_queue():

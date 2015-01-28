@@ -11,7 +11,7 @@ from goose import Goose
 
 def main():
     channel = utilities.make_queue()
-    channel.basic_qos(prefetch_count=1)
+    channel.basic_qos()
     channel.basic_consume(callback, queue='scraper_queue')
     channel.start_consuming()
 

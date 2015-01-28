@@ -44,11 +44,11 @@ def get_rss(address, website):
     return results
 
 
-def process_rss(rss_result, message_body, db_collection, message_queue):
+def process_rss(rss_result, message_body, redis_conn, message_queue):
     for result in rss_result:
         page_url = _convert_url(result.url, message_body['website'])
 
-        in_database = _check_mongo(page_url, db_collection)
+        in_database = _check_redis(page_url, redis_conn)
 
         message_body['title'] = result.title
         message_body['date'] = result.date
@@ -62,6 +62,9 @@ def process_rss(rss_result, message_body, db_collection, message_queue):
                                         body=to_send,
                                         properties=pika.BasicProperties(
                                             delivery_mode=2,))
+            redis_conn.set(page_url, 1)
+        else:
+            pass
 
 
 def _convert_url(url, website):
@@ -104,7 +107,7 @@ def _convert_url(url, website):
     return page_url
 
 
-def _check_mongo(url, db_collection):
+def _check_redis(url, conn):
     """
     Private function to check if a URL appears in the database.
 
@@ -125,7 +128,7 @@ def _check_mongo(url, db_collection):
             Indicates whether or not a URL was found in the database.
     """
 
-    if db_collection.find_one({"url": url}):
+    if conn.get(url):
         found = True
     else:
         found = False
@@ -144,31 +147,31 @@ def process_whitelist(filepath):
     return to_scrape
 
 
-def scrape_func(website, address, lang, db_collection, db_auth, db_user, db_pass):
+def scrape_func(website, address, lang):
     logger.info('Processing {}. {}'.format(website, datetime.datetime.now()))
 
-    coll = utilities.make_coll(db_collection, db_auth, db_user, db_pass)
+    redis_conn = utilities.make_redis()
     channel = utilities.make_queue()
 
     body = {'address': address, 'website': website, 'lang': lang}
     results = get_rss(address, website)
 
     if results:
-        process_rss(results, body, coll, channel)
+        process_rss(results, body, redis_conn, channel)
     else:
         logger.warning('No results for {}.'.format(website))
         pass
 
 
-def main(scrape_dict, db_collection, db_auth, db_user, db_pass):
+def main(scrape_dict):
 
     pool = Pool(pool_size)
 
+#    redis_conn = utilities.make_redis()
+
     while True:
         logger.info('Starting a new scrape. {}'.format(datetime.datetime.now()))
-        results = [pool.apply_async(scrape_func, (website, address, lang,
-                                                  db_collection, db_auth,
-                                                  db_user, db_pass)) for
+        results = [pool.apply_async(scrape_func, (website, address, lang)) for
                    website, (address, lang) in scrape_dict.iteritems()]
         timeout = [r.get(9999999) for r in results]
         logger.info('Finished a scrape. {}'.format(datetime.datetime.now()))
@@ -206,4 +209,4 @@ if __name__ == '__main__':
         print 'There was an error. Check the log file for more information.'
         logger.warning('Could not open URL whitelist file.')
 
-    main(to_scrape, db_collection, auth_db, auth_user, auth_pass)
+    main(to_scrape)

@@ -1,11 +1,13 @@
 alakhbar,http://feeds.feedburner.com/AlAkhbarEnglish?format=xml,international,english
 alarabia,http://english.alarabiya.net/.mrss/en.xml,international,english
+alawsat,http://www.aawsat.net/feed,local,english
 aljazeera,http://america.aljazeera.com/content/ajam/articles.rss,international,english
 allafrica,http://allafrica.com/tools/headlines/rdf/latest/headlines.rdf,international,english
 allafrica_somalia,http://allafrica.com/tools/headlines/rdf/somalia/headlines.rdf,international,english
 almonitor,http://www.al-monitor.com/rss,international,english
 afghanistan_analysts,http://www.afghanistan-analysts.org/feed/,local,english
 africa_newstime,http://feeds.feedburner.com/NewstimeAfrica?format=xml,international,english
+almasadar,http://www.almasdarnews.com/feed/,international,english
 ap,http://hosted2.ap.org/atom/APDEFAULT/cae69a7523db45408eeb2b3a98c0c9c5,wire,english
 asharq_al_awsat,http://www.aawsat.net/feed,international,english
 asianage_delhi,http://www.asianage.com/rss/40,local,english
@@ -13,10 +15,12 @@ asianage_india,http://www.asianage.com/rss/38,local,english
 asianage_int,http://www.asianage.com/rss/37,international,english
 asianage_mumbai,http://www.asianage.com/rss/42,local,english
 asiancorrespondent,http://asiancorrespondent.com/feed/,international,english
+australia_abc,http://www.abc.net.au/news/feed/52278/rss.xml,international,english
 australia_smh_politics,http://www.smh.com.au/rssheadlines/federal-politics/article/rss.xml,international,english
 australia_smh_world,http://feeds.smh.com.au/rssheadlines/world.xml,international,english
 australia_smh_national,http://feeds.smh.com.au/rssheadlines/national.xml,international,english
 austria_voice,http://voiceofvienna.org/?feed=rss2,international,english
+azerbaijan_newsagency,http://en.apa.az/rss,international,english
 balkanins,http://www.balkaninsight.com/en/rss/all-balkans-news-latest,international,english
 baltic_times,http://feeds.feedburner.com/TheBalticTimes?format=xml,local,english
 bangkokpost_breaking,http://www.bangkokpost.com/rss/data/breakingnews.xml,local,english
@@ -70,6 +74,7 @@ bnn_venezuela,http://www.venezuelastar.com/index.php/rss/262fd6adf564928c,intern
 bnn_zimbabwe,http://www.zimbabwestar.com/index.php/rss/4a6d634cbccbbfe2,international,english
 buenosairesherald,http://www.buenosairesherald.com/articles/rss.aspx,local,english
 bulatlat,http://feeds.feedburner.com/bulatlat?format=xml,local,english
+breakingdefense,http://feeds.feedburner.com/BreakingDefense?format=xml,international,english
 canada_globalnews,http://globalnews.ca/feed/,local,english
 cbs_world,http://www.cbsnews.com/latest/rss/world,international,english
 china_scmp_asia,http://www.scmp.com/rss/3/feed,international,english
@@ -98,6 +103,7 @@ denverpost_top,http://feeds.denverpost.com/dp-news-topstories?format=xml,interna
 denverpost_politics,http://feeds.denverpost.com/dp-politics-national_politics?format=xml,international,english
 dw,http://rss.dw.de/rdf/rss-en-all,international,english
 east_african,http://www.theeastafrican.co.ke/-/2456/2456/-/view/asFeed/-/13blr5d/-/index.xml,local,english
+eaworldview,http://eaworldview.com/feed/,local,english
 egypt_dailynews,http://feeds.feedburner.com/DailyNewsEgypt,local,english
 egypt_independent,http://www.egyptindependent.com//rss-feed-term/114/rss.xml,international,english
 euronews,http://feeds.feedburner.com/euronews/en/home?format=xml,international,english
@@ -187,6 +193,13 @@ ips_me,http://www.ipsnews.net/news/regional-categories/middle-east/,internationa
 ips_namerica,http://www.ipsnews.net/news/regional-categories/north-america/,international,english
 ips_ss,http://www.ipsnews.net/news/south-south/,international,english
 ips_world,http://www.ipsnews.net/news/regional-categories/world/,international,english
+iraq_allnews,http://www.alliraqnews.com/en/index.php?option=com_mediarss&feed_id=1&format=raw,local,english
+iraq_basnews,http://basnews.com/en/feed/,local,english
+iraq_businessnews,http://www.iraq-businessnews.com/feed/,local,english
+iraq_ekurd,http://ekurd.net/feed,local,english
+iraq_iraqinews,http://www.iraqinews.com/feed/,local,english
+iraq_oilnews,http://www.iraqoilreport.com/feed/,local,english
+iraq_rudaw,http://rudaw.net/english/rss?type=top,local,english
 ireland_herald,http://www.herald.ie/rss,local,english
 ireland_rte,http://www.rte.ie/news/rss/news-headlines.xml,international,english
 irin,http://www.irinnews.org/irin.xml,international,english
@@ -400,6 +413,7 @@ thenews_pk_karachi,http://feeds.feedburner.com/TheNewsInternational-Karachi,loca
 thenews_pk_lahore,http://feeds.feedburner.com/TheNewsInternational-Lahore,local,english
 thenews_pk_national,http://feeds.feedburner.com/TheNewsInternational-National,local,english
 thenews_pk_peshawar,http://feeds.feedburner.com/TheNewsInternational-Peshawar,local,english
+thomson_reuters_foundation,http://www.trust.org/data/feeds/acs/?&f_type=article&sbd=1,international,english
 times_of_india_india,http://timesofindia.feedsportal.com/c/33039/f/533965/index.rss,local,english
 times_of_india_world,http://timesofindia.feedsportal.com/c/33039/f/533917/index.rss,international,english
 tolo,http://www.tolonews.com/en/component/ninjarsssyndicator/?feed_id=1&format=raw,local,english

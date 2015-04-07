@@ -29,7 +29,7 @@ def make_coll(COLL, db_auth, db_user, db_pass):
     collection: pymongo.collection.Collection.
                 Collection within MongoDB that holds the scraped news stories.
     """
-    connection = MongoClient()
+    connection = MongoClient('198.74.56.4')
     if db_auth:
         connection[db_auth].authenticate(db_user, db_pass)
     db = connection.event_scrape

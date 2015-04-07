@@ -30,7 +30,7 @@ def scrape(url, extractor):
     try:
         headers = {'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1700.107 Safari/537.36"}
 
-        page = requests.get(url, headers=headers)
+        page = requests.get(url, headers=headers, timeout=.11)
         try:
             try:
                 article = extractor.extract(raw_html=page.content)

@@ -69,7 +69,10 @@ def parse_results(message, db_collection):
 
     try:
         if 'bnn_' in website:
-            text, meta = scrape.bnn_scrape(story_url, goose_extractor)
+            # story_url gets clobbered here because it's being replaced by
+            # the URL extracted from the bnn content.
+            text, meta, story_url = scrape.bnn_scrape(story_url,
+                                                      goose_extractor)
             text = text.encode('utf-8')
         else:
             text, meta = scrape.scrape(story_url, goose_extractor)

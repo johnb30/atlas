@@ -76,6 +76,11 @@ def bnn_scrape(base_url, extractor):
     meta : String.
             Parsed meta description of an article. Usually equivalent to the
             lede.
+
+    follow_url : String.
+                    URL extracted from the original bnn source. This URL
+                    contains the actual content and is one that is stored
+                    in the database.
     """
     browser = webdriver.PhantomJS()
     browser.get(base_url)
@@ -95,4 +100,4 @@ def bnn_scrape(base_url, extractor):
 
     text, meta = scrape(follow_url, extractor)
 
-    return text, meta
+    return text, meta, follow_url

@@ -67,19 +67,20 @@ def parse_results(message, db_collection):
     else:
         print(lang)
 
-    try:
-        if 'bnn_' in website:
-            # story_url gets clobbered here because it's being replaced by
-            # the URL extracted from the bnn content.
-            text, meta, story_url = scrape.bnn_scrape(story_url,
-                                                      goose_extractor)
-            text = text.encode('utf-8')
-        else:
-            text, meta = scrape.scrape(story_url, goose_extractor)
-            text = text.encode('utf-8')
-    except TypeError:
-        print 'Problem obtaining text from URL: {}'.format(story_url)
-        text = ''
+    #try:
+    if 'bnn_' in website:
+        # story_url gets clobbered here because it's being replaced by
+        # the URL extracted from the bnn content.
+        print('\tA BNN story.')
+        text, meta, story_url = scrape.bnn_scrape(story_url,
+                                                    goose_extractor)
+        text = text.encode('utf-8')
+    else:
+        text, meta = scrape.scrape(story_url, goose_extractor)
+        text = text.encode('utf-8')
+#    except TypeError:
+#        print '\tProblem obtaining text from URL: {}'.format(story_url)
+#        text = ''
 
     if text:
         cleaned_text = _clean_text(text, website)
@@ -92,13 +93,13 @@ def parse_results(message, db_collection):
                                               lang)
         if entry_id:
             try:
-                print 'Added entry from {} with id {}. {}.'.format(story_url,
+                print '\tAdded entry from {} with id {}. {}.'.format(story_url,
                                                                    entry_id,
                                                                    datetime.datetime.now())
                 #logger.info('Added entry from {} with id {}'.format(story_url,
                 #                                                    entry_id))
             except UnicodeDecodeError:
-                print 'Added entry from {}. Unicode error for id'.format(story_url)
+                print '\tAdded entry from {}. Unicode error for id'.format(story_url)
                 #logger.info('Added entry from {}. Unicode error for id'.format(result.url))
 
 

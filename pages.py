@@ -1,8 +1,8 @@
 import re
 import json
 import scrape
-#TODO: Setup logging
-import logging
+# TODO: Setup logging
+# import logging
 import datetime
 import utilities
 import mongo_connection
@@ -19,7 +19,7 @@ def main():
 def callback(ch, method, properties, body):
     global coll
     body = json.loads(body)
-    #TODO: This is bad
+    # TODO: This is bad
     try:
         print " [x] Received {}. {}".format(body['url'],
                                             datetime.datetime.now())
@@ -68,19 +68,22 @@ def parse_results(message, db_collection):
         print(lang)
 
     try:
-        text, meta = scrape.scrape(story_url, goose_extractor)
-        text = text.encode('utf-8')
+        if 'bnn_' in website:
+            text, meta = scrape.bnn_scrape(story_url, goose_extractor)
+            text = text.encode('utf-8')
+        else:
+            text, meta = scrape.scrape(story_url, goose_extractor)
+            text = text.encode('utf-8')
     except TypeError:
         print 'Problem obtaining text from URL: {}'.format(story_url)
-        #logger.warning('Problem obtaining text from URL: {}'.format(story_url))
         text = ''
 
     if text:
         cleaned_text = _clean_text(text, website)
 
-        #TODO: Figure out where the title, URL, and date should come from
-        #TODO: Might want to pull title straight from the story since the RSS
-        #feed is borked sometimes.
+        # TODO: Figure out where the title, URL, and date should come from
+        # TODO: Might want to pull title straight from the story since the RSS
+        # feed is borked sometimes.
         entry_id = mongo_connection.add_entry(db_collection, cleaned_text,
                                               title, story_url, date, website,
                                               lang)

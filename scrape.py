@@ -48,8 +48,9 @@ def scrape(url, extractor, raw_html=''):
         except UnicodeDecodeError:
             article = extractor.extract(raw_html=html.decode('utf-8',
                                                              errors='replace'))
-        except ValueError:
-            print('\tWonky HTML for page {}'.format(url))
+        except Exception, e:
+            print('\tProblem pulling cleaned content from {}. {}'.format(url,
+                                                                         e))
             return '', ''
     else:
         print('\tNo HTML for page {}.'.format(url))

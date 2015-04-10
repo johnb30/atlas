@@ -32,7 +32,6 @@ def scrape(url, extractor, raw_html=''):
     #try:
     headers = {'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1700.107 Safari/537.36"}
 
-
     try:
         if not raw_html:
             page = requests.get(url, headers=headers)
@@ -43,11 +42,15 @@ def scrape(url, extractor, raw_html=''):
         return '', ''
         print('\tProblem requesting url: {}. {}'.format(url, e))
 
-    try:
-        article = extractor.extract(raw_html=html)
-    except UnicodeDecodeError:
-        article = extractor.extract(raw_html=html.decode('utf-8',
-                                                         errors='replace'))
+    if html:
+        try:
+            article = extractor.extract(raw_html=html)
+        except UnicodeDecodeError:
+            article = extractor.extract(raw_html=html.decode('utf-8',
+                                                             errors='replace'))
+    else:
+        print('\tNo HTML for page {}.'.format(url))
+        return '', ''
 
     try:
         text = article.cleaned_text

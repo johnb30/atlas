@@ -112,6 +112,7 @@ def bnn_scrape(base_url, extractor):
             meta = ''
     else:
         follow_url = base_url
+        print('\tScraping...')
         text, meta = scrape(base_url, extractor, html_source)
 
     return text, meta, follow_url

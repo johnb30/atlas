@@ -101,6 +101,8 @@ def parse_results(message, db_collection):
             except UnicodeDecodeError:
                 print '\tAdded entry from {}. Unicode error for id'.format(story_url)
                 #logger.info('Added entry from {}. Unicode error for id'.format(result.url))
+    else:
+     print('\tWARNING: No text from {}'.format(story_url))
 
 
 def _clean_text(text, website):

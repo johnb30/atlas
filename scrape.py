@@ -37,6 +37,12 @@ def scrape(url, extractor):
             except UnicodeDecodeError:
                 article = extractor.extract(raw_html=page.content.decode('utf-8',
                                                                          errors='replace'))
+            article = extractor.extract(raw_html=html)
+        except UnicodeDecodeError:
+            article = extractor.extract(raw_html=html.decode('utf-8',
+                                                                errors='replace'))
+        page = requests.get(url, headers=headers, timeout=.11)
+        try:
             text = article.cleaned_text
             meta = article.meta_description
             return text, meta

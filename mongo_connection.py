@@ -33,14 +33,25 @@ def add_entry(collection, text, title, url, date, website, lang):
 
     object_id : String
     """
-    toInsert = {"url": url,
-                "title": title,
-                "source": website,
-                "date": date,
-                "date_added": datetime.datetime.utcnow(),
-                "content": text,
-                "stanford": 0,
-                "geo": 0,
-                "language": lang}
+    if lang == 'arabic':
+        toInsert = {"url": url,
+                    "title": title,
+                    "source": website,
+                    "date": date,
+                    "date_added": datetime.datetime.utcnow(),
+                    "content_ar": text,
+                    "stanford": 0,
+                    "geo": 0,
+                    "language": lang}
+    elif lang == 'english':
+        toInsert = {"url": url,
+                    "title": title,
+                    "source": website,
+                    "date": date,
+                    "date_added": datetime.datetime.utcnow(),
+                    "content_en": text,
+                    "stanford": 0,
+                    "geo": 0,
+                    "language": lang}
     object_id = collection.insert(toInsert)
     return object_id

@@ -1,8 +1,8 @@
 import re
 import json
 import scrape
-#TODO: Setup logging
-import logging
+# TODO: Setup logging
+# import logging
 import datetime
 import utilities
 import mongo_connection
@@ -19,7 +19,7 @@ def main():
 def callback(ch, method, properties, body):
     global coll
     body = json.loads(body)
-    #TODO: This is bad
+    # TODO: This is bad
     try:
         print " [x] Received {}. {}".format(body['url'],
                                             datetime.datetime.now())
@@ -67,33 +67,42 @@ def parse_results(message, db_collection):
     else:
         print(lang)
 
-    try:
+    #try:
+    if 'bnn_' in website:
+        # story_url gets clobbered here because it's being replaced by
+        # the URL extracted from the bnn content.
+        print('\tA BNN story.')
+        text, meta, story_url = scrape.bnn_scrape(story_url,
+                                                    goose_extractor)
+        text = text.encode('utf-8')
+    else:
         text, meta = scrape.scrape(story_url, goose_extractor)
         text = text.encode('utf-8')
-    except TypeError:
-        print 'Problem obtaining text from URL: {}'.format(story_url)
-        #logger.warning('Problem obtaining text from URL: {}'.format(story_url))
-        text = ''
+#    except TypeError:
+#        print '\tProblem obtaining text from URL: {}'.format(story_url)
+#        text = ''
 
     if text:
         cleaned_text = _clean_text(text, website)
 
-        #TODO: Figure out where the title, URL, and date should come from
-        #TODO: Might want to pull title straight from the story since the RSS
-        #feed is borked sometimes.
+        # TODO: Figure out where the title, URL, and date should come from
+        # TODO: Might want to pull title straight from the story since the RSS
+        # feed is borked sometimes.
         entry_id = mongo_connection.add_entry(db_collection, cleaned_text,
                                               title, story_url, date, website,
                                               lang)
         if entry_id:
             try:
-                print 'Added entry from {} with id {}. {}.'.format(story_url,
+                print '\tAdded entry from {} with id {}. {}.'.format(story_url,
                                                                    entry_id,
                                                                    datetime.datetime.now())
                 #logger.info('Added entry from {} with id {}'.format(story_url,
                 #                                                    entry_id))
             except UnicodeDecodeError:
-                print 'Added entry from {}. Unicode error for id'.format(story_url)
+                print '\tAdded entry from {}. Unicode error for id'.format(story_url)
                 #logger.info('Added entry from {}. Unicode error for id'.format(result.url))
+    else:
+     print('\tWARNING: No text from {}'.format(story_url))
 
 
 def _clean_text(text, website):

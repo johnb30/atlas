@@ -32,27 +32,31 @@ def scrape(url, extractor, raw_html=''):
     #try:
     headers = {'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1700.107 Safari/537.36"}
 
-    if not raw_html:
-        page = requests.get(url, headers=headers)
-        html = page.content
-    else:
-        html = raw_html
 
     try:
-        try:
-            article = extractor.extract(raw_html=html)
-        except UnicodeDecodeError:
-            article = extractor.extract(raw_html=html.decode('utf-8',
-                                                                errors='replace'))
-        try:
-            text = article.cleaned_text
-            meta = article.meta_description
-            return text, meta
-            # Generic error catching is bad
-        except Exception, e:
-            print('\tProblem scraping URL: {}. {}.'.format(url, e))
+        if not raw_html:
+            page = requests.get(url, headers=headers)
+            html = page.content
+        else:
+            html = raw_html
     except Exception, e:
+        return '', ''
         print('\tProblem requesting url: {}. {}'.format(url, e))
+
+    try:
+        article = extractor.extract(raw_html=html)
+    except UnicodeDecodeError:
+        article = extractor.extract(raw_html=html.decode('utf-8',
+                                                         errors='replace'))
+
+    try:
+        text = article.cleaned_text
+        meta = article.meta_description
+        return text, meta
+        # Generic error catching is bad
+    except Exception, e:
+        return '', ''
+        print('\tProblem scraping URL: {}. {}.'.format(url, e))
 
 
 def bnn_scrape(base_url, extractor):

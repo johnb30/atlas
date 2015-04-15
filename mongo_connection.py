@@ -2,7 +2,7 @@ import datetime
 from kafka import SimpleProducer, KafkaClient
 
 
-def add_entry(collection, text, title, url, date, website, lang):
+def add_entry(collection, text, text_feats, title, url, date, website, lang):
     """
     Function that creates the dictionary of content to add to a MongoDB
     instance and inserts the information into an external data store.
@@ -15,6 +15,9 @@ def add_entry(collection, text, title, url, date, website, lang):
 
     text : String.
             Text from a given webpage.
+
+    text_feats : Dict.
+                    Features returned by the hermes API.
 
     title : String.
             Title of the news story.
@@ -99,7 +102,9 @@ def make_entry(collection, text, title, url, date, website, lang):
                     "date_added": datetime.datetime.utcnow(),
                     "content_en": text,
                     "stanford": 0,
-                    "geo": 0,
+                    "mitie_info": text_feats['MITIE'],
+                    "geo_info": text_feats['CLIFF'],
+                    "topic_info": text_feats['topic_model'],
                     "language": lang}
 
     return toInsert

@@ -94,4 +94,4 @@ def make_entry(collection, text, title, url, date, website, lang):
                     "geo": 0,
                     "language": lang}
 
-    return to_insert
+    return toInsert

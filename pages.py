@@ -92,7 +92,13 @@ def parse_results(message, db_collection):
             text_feats = requests.post(url, data=data, auth=('user',
                                                              'text2features'),
                                        headers=headers).json()
+            if 'message' in text_feats.keys():
+                print text_feats
+                print('\tBad text features...')
+                text_feats = {}
+
         else:
+            print('\tNo text features...')
             text_feats = {}
 
         # TODO: Figure out where the title, URL, and date should come from

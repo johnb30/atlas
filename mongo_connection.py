@@ -95,21 +95,41 @@ def make_entry(collection, text, title, url, date, website, lang):
                     "geo": 0,
                     "language": lang}
     elif lang == 'english':
-        stanford = text_feats['stanford']['sentences']
-        trees = []
-        for i in xrange(stanford):
-            trees.append(stanford[i]['parsetree'])
+        if text_feats:
+            try:
+                trees = []
+                stanford = text_feats['stanford']['sentences']
+                full_stanford = text_feats['stanford']
+                for i in xrange(len(stanford)):
+                    trees.append(stanford[i]['parsetree'])
+                stanford_coded = 1
+            except TypeError:
+                full_stanford = {}
+                stanford_coded = 0
+            mitie_info = text_feats['MITIE']
+            geo_info = text_feats['CLIFF']
+            topic_info = text_feats['topic_model']
+            good_text_feats = 1
+        else:
+            trees = []
+            stanford_coded = 0
+            mitie_info = {}
+            geo_info = {}
+            topic_info = {}
+            full_stanford = {}
+            good_text_feats = 0
         toInsert = {"url": url,
                     "title": title,
                     "source": website,
                     "date": date,
                     "date_added": datetime.datetime.utcnow(),
                     "content_en": text,
-                    "stanford": 1,
-                    "mitie_info": text_feats['MITIE'],
-                    "geo_info": text_feats['CLIFF'],
-                    "topic_info": text_feats['topic_model'],
-                    "full_stanford": text_feats['stanford'],
+                    "stanford": stanford_coded,
+                    "good_text_feats": good_text_feats,
+                    "mitie_info": mitie_info,
+                    "geo_info": geo_info,
+                    "topic_info": topic_info,
+                    "full_stanford": full_stanford,
                     "parsed_sents": trees,
                     "language": lang}
 

@@ -1,11 +1,11 @@
 import datetime
+from kafka import SimpleProducer, KafkaClient
 
 
 def add_entry(collection, text, title, url, date, website, lang):
     """
     Function that creates the dictionary of content to add to a MongoDB
-    instance, checks whether a given URL is already in the database, and
-    inserts the new content into the database.
+    instance and inserts the information into an external data store.
 
     Parameters
     ----------
@@ -33,6 +33,46 @@ def add_entry(collection, text, title, url, date, website, lang):
 
     object_id : String
     """
+
+    to_insert = make_entry(collection, text, title, url, date, website, lang)
+    object_id = collection.insert(to_insert)
+
+    kafka = KafkaClient('k01.istresearch.com:9092')
+    producer = SimpleProducer(kafka)
+    producer.send_messages("caerus-news", to_insert)
+
+    return object_id
+
+
+def make_entry(collection, text, title, url, date, website, lang):
+    """
+    Function that creates the dictionary of content to add to an external data
+    store.
+
+    Parameters
+    ----------
+
+    text : String.
+            Text from a given webpage.
+
+    title : String.
+            Title of the news story.
+
+    url : String.
+            URL of the webpage from which the content was pulled.
+
+    date : String.
+            Date pulled from the RSS feed.
+
+    website : String.
+                Nickname of the site from which the content was pulled.
+
+    Returns
+    -------
+
+    to_inser : Dictionary.
+                Dictionary of text and other content.
+    """
     if lang == 'arabic':
         toInsert = {"url": url,
                     "title": title,
@@ -53,5 +93,5 @@ def add_entry(collection, text, title, url, date, website, lang):
                     "stanford": 0,
                     "geo": 0,
                     "language": lang}
-    object_id = collection.insert(toInsert)
-    return object_id
+
+    return to_insert

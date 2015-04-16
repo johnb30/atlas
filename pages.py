@@ -88,7 +88,7 @@ def parse_results(message, db_collection):
         if lang == 'english':
             data = json.dumps({'content': text})
             headers = {'Content-Type': 'application/json'}
-            url = 'PLACEHOLDER'
+            url = 'http://52.6.20.198:5000/'
             text_feats = requests.post(url, data=data, auth=('user',
                                                              'text2features'),
                                        headers=headers).json()

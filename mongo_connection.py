@@ -95,16 +95,22 @@ def make_entry(collection, text, title, url, date, website, lang):
                     "geo": 0,
                     "language": lang}
     elif lang == 'english':
+        stanford = text_feats['stanford']['sentences']
+        trees = []
+        for i in xrange(stanford):
+            trees.append(stanford[i]['parsetree'])
         toInsert = {"url": url,
                     "title": title,
                     "source": website,
                     "date": date,
                     "date_added": datetime.datetime.utcnow(),
                     "content_en": text,
-                    "stanford": 0,
+                    "stanford": 1,
                     "mitie_info": text_feats['MITIE'],
                     "geo_info": text_feats['CLIFF'],
                     "topic_info": text_feats['topic_model'],
+                    "full_stanford": text_feats['stanford'],
+                    "parsed_sents": trees,
                     "language": lang}
 
     return toInsert

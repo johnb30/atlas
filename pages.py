@@ -91,7 +91,7 @@ def parse_results(message, db_collection):
             url = 'PLACEHOLDER'
             text_feats = requests.post(url, data=data, auth=('user',
                                                              'text2features'),
-                                       headers=headers)
+                                       headers=headers).json()
         else:
             text_feats = {}
 

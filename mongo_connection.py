@@ -35,6 +35,7 @@ def add_entry(collection, text, title, url, date, website, lang):
     """
 
     to_insert = make_entry(collection, text, title, url, date, website, lang)
+    print(to_insert)
     object_id = collection.insert(to_insert)
 
     kafka = KafkaClient('k01.istresearch.com:9092')

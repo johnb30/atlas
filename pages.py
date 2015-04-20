@@ -88,6 +88,7 @@ def parse_results(message, db_collection):
         # TODO: Figure out where the title, URL, and date should come from
         # TODO: Might want to pull title straight from the story since the RSS
         # feed is borked sometimes.
+        print('Adding entry...')
         entry_id = mongo_connection.add_entry(db_collection, cleaned_text,
                                               title, story_url, date, website,
                                               lang)

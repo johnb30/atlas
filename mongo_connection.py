@@ -38,9 +38,16 @@ def add_entry(collection, text, title, url, date, website, lang):
     print(to_insert)
     object_id = collection.insert(to_insert)
 
-    kafka = KafkaClient('k01.istresearch.com:9092')
-    producer = SimpleProducer(kafka)
-    producer.send_messages("caerus-news", to_insert)
+    #Send "ISIL-related" stories to XDATA
+    #Keywords defined by Uncharted
+    keywords = ['terror', 'attack', 'weapon', 'bomb', 'militant', 'islam',
+                'isil', 'eiil', 'isis', 'islamic', 'state', 'taliban', 'qaeda',
+                'jihad', 'iraq', 'syria', 'suicide', 'infidel', 'pakistan',
+                'taliban', 'afghanistan', 'yemen', 'kurdish', 'caliphate']
+    if any([x in text for x in keywords]):
+        kafka = KafkaClient('k01.istresearch.com:9092')
+        producer = SimpleProducer(kafka)
+        producer.send_messages("caerus-news", to_insert)
 
     return object_id
 

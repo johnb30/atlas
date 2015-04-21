@@ -2,7 +2,7 @@ import datetime
 from kafka import SimpleProducer, KafkaClient
 
 
-def add_entry(collection, text, title, url, date, website, lang):
+def add_entry(collection, text, text_feats, title, url, date, website, lang):
     """
     Function that creates the dictionary of content to add to a MongoDB
     instance and inserts the information into an external data store.
@@ -15,6 +15,9 @@ def add_entry(collection, text, title, url, date, website, lang):
 
     text : String.
             Text from a given webpage.
+
+    text_feats : Dict.
+                    Features returned by the hermes API.
 
     title : String.
             Title of the news story.
@@ -92,14 +95,42 @@ def make_entry(collection, text, title, url, date, website, lang):
                     "geo": 0,
                     "language": lang}
     elif lang == 'english':
+        if text_feats:
+            try:
+                trees = []
+                stanford = text_feats['stanford']['sentences']
+                full_stanford = text_feats['stanford']
+                for i in xrange(len(stanford)):
+                    trees.append(stanford[i]['parsetree'])
+                stanford_coded = 1
+            except TypeError:
+                full_stanford = {}
+                stanford_coded = 0
+            mitie_info = text_feats['MITIE']
+            geo_info = text_feats['CLIFF']
+            topic_info = text_feats['topic_model']
+            good_text_feats = 1
+        else:
+            trees = []
+            stanford_coded = 0
+            mitie_info = {}
+            geo_info = {}
+            topic_info = {}
+            full_stanford = {}
+            good_text_feats = 0
         toInsert = {"url": url,
                     "title": title,
                     "source": website,
                     "date": date,
                     "date_added": datetime.datetime.utcnow(),
                     "content_en": text,
-                    "stanford": 0,
-                    "geo": 0,
+                    "stanford": stanford_coded,
+                    "good_text_feats": good_text_feats,
+                    "mitie_info": mitie_info,
+                    "geo_info": geo_info,
+                    "topic_info": topic_info,
+                    "full_stanford": full_stanford,
+                    "parsed_sents": trees,
                     "language": lang}
 
     return toInsert

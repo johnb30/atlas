@@ -1,3 +1,4 @@
+import json
 import datetime
 from kafka import SimpleProducer, KafkaClient
 
@@ -37,17 +38,23 @@ def add_entry(collection, text, text_feats, title, url, date, website, lang):
     object_id : String
     """
 
-    to_insert = make_entry(collection, text, title, url, date, website, lang)
-    print(to_insert)
+    to_insert = make_entry(collection, text, text_feats, title, url, date,
+                           website, lang)
     object_id = collection.insert(to_insert)
 
     #Send "ISIL-related" stories to XDATA
     #Keywords defined by Uncharted
     keywords = ['terror', 'attack', 'weapon', 'bomb', 'militant', 'islam',
-                'isil', 'eiil', 'isis', 'islamic', 'state', 'taliban', 'qaeda',
+                'isil', 'eiil', 'isis', 'islamic', 'taliban', 'qaeda',
                 'jihad', 'iraq', 'syria', 'suicide', 'infidel', 'pakistan',
                 'taliban', 'afghanistan', 'yemen', 'kurdish', 'caliphate']
     if any([x in text for x in keywords]):
+        print('\tSending to Kafka...')
+        to_insert['_id'] = str(to_insert['_id'])
+        to_insert['date'] = str(to_insert['date'])
+        to_insert['date_added'] = str(to_insert['date_added'])
+        to_insert = json.dumps(to_insert)
+
         kafka = KafkaClient('k01.istresearch.com:9092')
         producer = SimpleProducer(kafka)
         producer.send_messages("caerus-news", to_insert)
@@ -55,7 +62,7 @@ def add_entry(collection, text, text_feats, title, url, date, website, lang):
     return object_id
 
 
-def make_entry(collection, text, title, url, date, website, lang):
+def make_entry(collection, text, text_feats, title, url, date, website, lang):
     """
     Function that creates the dictionary of content to add to an external data
     store.

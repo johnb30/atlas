@@ -68,7 +68,6 @@ def parse_results(message, db_collection):
     else:
         print(lang)
 
-    # try:
     if 'bnn_' in website:
         # story_url gets clobbered here because it's being replaced by
         # the URL extracted from the bnn content.
@@ -78,9 +77,6 @@ def parse_results(message, db_collection):
     else:
         text, meta = scrape.scrape(story_url, goose_extractor)
         text = text.encode('utf-8')
-#    except TypeError:
-#        print '\tProblem obtaining text from URL: {}'.format(story_url)
-#        text = ''
 
     if text:
         cleaned_text = _clean_text(text, website)
@@ -89,9 +85,11 @@ def parse_results(message, db_collection):
             data = json.dumps({'content': text})
             headers = {'Content-Type': 'application/json'}
             url = 'http://52.6.20.198:5000/'
+            print('\tGetting features. {}.'.format(datetime.datetime.now()))
             text_feats = requests.post(url, data=data, auth=('user',
                                                              'text2features'),
                                        headers=headers).json()
+            print('\tDone getting features. {}.'.format(datetime.datetime.now()))
             if 'message' in text_feats.keys():
                 print text_feats
                 print('\tBad text features...')
@@ -104,9 +102,9 @@ def parse_results(message, db_collection):
         # TODO: Figure out where the title, URL, and date should come from
         # TODO: Might want to pull title straight from the story since the RSS
         # feed is borked sometimes.
-        print('Adding entry...')
+        print('\tAdding entry...')
         entry_id = mongo_connection.add_entry(db_collection, cleaned_text,
-                                              text_feats, title, story_url,
+                                              {}, title, story_url,
                                               date, website, lang)
         if entry_id:
             try:
@@ -117,6 +115,7 @@ def parse_results(message, db_collection):
                 print '\tAdded entry from {}. Unicode error for id'.format(story_url)
     else:
         print('\tWARNING: No text from {}'.format(story_url))
+        print(text, meta)
 
 
 def _clean_text(text, website):

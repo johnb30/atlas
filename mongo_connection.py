@@ -52,16 +52,15 @@ def add_entry(collection, text, text_feats, title, url, date, website, lang):
     # Send to Elasticsearch
     base_url = 'http://52.6.147.254:9200/api/stories/'
     url = base_url + '{}/_create'.format(json_friendly['_id'])
+    print('\tSending to ES.')
     out = requests.put(url, data=json_friendly)
 
     if out != 201:
         print('\tError sending to ES.')
     # Send "ISIL-related" stories to XDATA
     # Keywords defined by Uncharted
-    keywords = ['terror', 'attack', 'weapon', 'bomb', 'militant', 'islam',
-                'isil', 'eiil', 'isis', 'islamic', 'taliban', 'qaeda',
-                'jihad', 'iraq', 'syria', 'suicide', 'infidel', 'pakistan',
-                'taliban', 'afghanistan', 'yemen', 'kurdish', 'caliphate']
+    keywords = ['isil', 'eiil', 'isis', 'islamic', 'taliban', 'qaeda',
+                'caliphate', 'daesh']
     if any([x in text for x in keywords]):
         print('\tSending to Kafka...')
 

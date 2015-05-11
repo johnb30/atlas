@@ -104,7 +104,7 @@ def parse_results(message, db_collection):
         # feed is borked sometimes.
         print('\tAdding entry...')
         entry_id = mongo_connection.add_entry(db_collection, cleaned_text,
-                                              {}, title, story_url,
+                                              text_feats, title, story_url,
                                               date, website, lang)
         if entry_id:
             try:
@@ -115,7 +115,6 @@ def parse_results(message, db_collection):
                 print '\tAdded entry from {}. Unicode error for id'.format(story_url)
     else:
         print('\tWARNING: No text from {}'.format(story_url))
-        print(text, meta)
 
 
 def _clean_text(text, website):

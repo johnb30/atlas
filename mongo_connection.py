@@ -1,4 +1,5 @@
 import json
+import requests
 import datetime
 from kafka import SimpleProducer, KafkaClient
 
@@ -42,22 +43,35 @@ def add_entry(collection, text, text_feats, title, url, date, website, lang):
                            website, lang)
     object_id = collection.insert(to_insert)
 
-    #Send "ISIL-related" stories to XDATA
-    #Keywords defined by Uncharted
-    keywords = ['terror', 'attack', 'weapon', 'bomb', 'militant', 'islam',
-                'isil', 'eiil', 'isis', 'islamic', 'taliban', 'qaeda',
-                'jihad', 'iraq', 'syria', 'suicide', 'infidel', 'pakistan',
-                'taliban', 'afghanistan', 'yemen', 'kurdish', 'caliphate']
+    json_friendly = to_insert
+    json_friendly['_id'] = str(json_friendly['_id'])
+    for key in json_friendly['mitie_info'].keys():
+        json_friendly['mitie_info'][key] = json.dumps(json_friendly['mitie_info'][key])
+    id_str = json_friendly['_id']
+    json_friendly['date'] = str(json_friendly['date'])
+    json_friendly['date_added'] = json_friendly['date_added'].strftime("%Y-%m-%dT%H:%M:%S")
+    json_friendly = json.dumps(json_friendly)
+
+    # Send to Elasticsearch
+    base_url = 'http://52.6.147.254:9200/api/stories/'
+    url = base_url + '{}/_create'.format(id_str)
+    print('\tSending to ES.')
+    out = requests.put(url, data=json_friendly)
+
+    if out.status_code != 201:
+        print('\tError sending to ES.')
+        print(out.status_code)
+        print(out.json())
+    # Send "ISIL-related" stories to XDATA
+    # Keywords defined by Uncharted
+    keywords = ['isil', 'eiil', 'isis', 'islamic', 'taliban', 'qaeda',
+                'caliphate', 'daesh']
     if any([x in text for x in keywords]):
         print('\tSending to Kafka...')
-        to_insert['_id'] = str(to_insert['_id'])
-        to_insert['date'] = str(to_insert['date'])
-        to_insert['date_added'] = str(to_insert['date_added'])
-        to_insert = json.dumps(to_insert)
 
         kafka = KafkaClient('k01.istresearch.com:9092')
         producer = SimpleProducer(kafka)
-        producer.send_messages("caerus-news", to_insert)
+        producer.send_messages("caerus-news", json_friendly)
 
     return object_id
 
@@ -98,24 +112,34 @@ def make_entry(collection, text, text_feats, title, url, date, website, lang):
                     "date": date,
                     "date_added": datetime.datetime.utcnow(),
                     "content_ar": text,
+                    "content_en": '',
                     "stanford": 0,
                     "geo": 0,
                     "language": lang}
     elif lang == 'english':
         if text_feats:
-            try:
-                trees = []
-                stanford = text_feats['stanford']['sentences']
-                full_stanford = text_feats['stanford']
-                for i in xrange(len(stanford)):
-                    trees.append(stanford[i]['parsetree'])
-                stanford_coded = 1
-            except TypeError:
-                full_stanford = {}
-                stanford_coded = 0
+            # No stanford for now...
+#            try:
+#                trees = []
+#                stanford = text_feats['stanford']['sentences']
+#                full_stanford = text_feats['stanford']
+#                for i in xrange(len(stanford)):
+#                    trees.append(stanford[i]['parsetree'])
+#                stanford_coded = 1
+#            except TypeError:
+#                full_stanford = {}
+#                stanford_coded = 0
+            trees = []
+            full_stanford = {}
+            stanford_coded = 0
             mitie_info = text_feats['MITIE']
+            if 'status' in mitie_info.keys():
+                mitie_info = {}
+            else:
+                for key in mitie_info.keys():
+                    mitie_info[key] = json.loads(mitie_info[key])
             geo_info = text_feats['CLIFF']
-            topic_info = text_feats['topic_model']
+            topic_info = json.loads(text_feats['topic_model'])
             good_text_feats = 1
         else:
             trees = []
@@ -131,6 +155,7 @@ def make_entry(collection, text, text_feats, title, url, date, website, lang):
                     "date": date,
                     "date_added": datetime.datetime.utcnow(),
                     "content_en": text,
+                    "content_ar": '',
                     "stanford": stanford_coded,
                     "good_text_feats": good_text_feats,
                     "mitie_info": mitie_info,

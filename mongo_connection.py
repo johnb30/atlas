@@ -114,21 +114,25 @@ def make_entry(collection, text, text_feats, title, url, date, website, lang):
                     "language": lang}
     elif lang == 'english':
         if text_feats:
-            try:
-                trees = []
-                stanford = text_feats['stanford']['sentences']
-                full_stanford = text_feats['stanford']
-                for i in xrange(len(stanford)):
-                    trees.append(stanford[i]['parsetree'])
-                stanford_coded = 1
-            except TypeError:
-                full_stanford = {}
-                stanford_coded = 0
+            # No stanford for now...
+#            try:
+#                trees = []
+#                stanford = text_feats['stanford']['sentences']
+#                full_stanford = text_feats['stanford']
+#                for i in xrange(len(stanford)):
+#                    trees.append(stanford[i]['parsetree'])
+#                stanford_coded = 1
+#            except TypeError:
+#                full_stanford = {}
+#                stanford_coded = 0
+            trees = []
+            full_stanford = {}
+            stanford_coded = 0
             mitie_info = text_feats['MITIE']
             for key in mitie_info.keys():
                 mitie_info[key] = json.loads(mitie_info[key])
             geo_info = text_feats['CLIFF']
-            topic_info = text_feats['topic_model']
+            topic_info = json.loads(text_feats['topic_model'])
             good_text_feats = 1
         else:
             trees = []

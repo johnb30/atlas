@@ -45,18 +45,23 @@ def add_entry(collection, text, text_feats, title, url, date, website, lang):
 
     json_friendly = to_insert
     json_friendly['_id'] = str(json_friendly['_id'])
+    for key in json_friendly['mitie_info'].keys():
+        json_friendly['mitie_info'][key] = json.dumps(json_friendly['mitie_info'][key])
+    id_str = json_friendly['_id']
     json_friendly['date'] = str(json_friendly['date'])
-    json_friendly['date_added'] = str(json_friendly['date_added'])
+    json_friendly['date_added'] = json_friendly['date_added'].strftime("%Y-%m-%dT%H:%M:%S")
     json_friendly = json.dumps(json_friendly)
 
     # Send to Elasticsearch
     base_url = 'http://52.6.147.254:9200/api/stories/'
-    url = base_url + '{}/_create'.format(json_friendly['_id'])
+    url = base_url + '{}/_create'.format(id_str)
     print('\tSending to ES.')
     out = requests.put(url, data=json_friendly)
 
-    if out != 201:
+    if out.status_code != 201:
         print('\tError sending to ES.')
+        print(out.status_code)
+        print(out.json())
     # Send "ISIL-related" stories to XDATA
     # Keywords defined by Uncharted
     keywords = ['isil', 'eiil', 'isis', 'islamic', 'taliban', 'qaeda',
@@ -128,8 +133,11 @@ def make_entry(collection, text, text_feats, title, url, date, website, lang):
             full_stanford = {}
             stanford_coded = 0
             mitie_info = text_feats['MITIE']
-            for key in mitie_info.keys():
-                mitie_info[key] = json.loads(mitie_info[key])
+            if 'status' in mitie_info.keys():
+                mitie_info = {}
+            else:
+                for key in mitie_info.keys():
+                    mitie_info[key] = json.loads(mitie_info[key])
             geo_info = text_feats['CLIFF']
             topic_info = json.loads(text_feats['topic_model'])
             good_text_feats = 1

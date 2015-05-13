@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 import requests
-from lxml import etree
 from bs4 import BeautifulSoup
 from selenium import webdriver
 
@@ -29,7 +28,6 @@ def scrape(url, extractor, raw_html=''):
             Parsed meta description of an article. Usually equivalent to the
             lede.
     """
-    #try:
     headers = {'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1700.107 Safari/537.36"}
 
     try:
@@ -59,7 +57,11 @@ def scrape(url, extractor, raw_html=''):
     try:
         text = article.cleaned_text
         meta = article.meta_description
-        return text, meta
+        # Throw out those bad articles.
+        if len(text.split()) < 30:
+            return '', ''
+        else:
+            return text, meta
         # Generic error catching is bad
     except Exception, e:
         return '', ''

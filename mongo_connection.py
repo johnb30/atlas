@@ -139,6 +139,7 @@ def make_entry(collection, text, text_feats, title, url, date, website, lang):
                 for key in mitie_info.keys():
                     mitie_info[key] = json.loads(mitie_info[key])
             geo_info = text_feats['CLIFF']
+            mordecai_info = json.loads(text_feats['mordecai'])
             topic_info = json.loads(text_feats['topic_model'])
             good_text_feats = 1
         else:
@@ -160,6 +161,7 @@ def make_entry(collection, text, text_feats, title, url, date, website, lang):
                     "good_text_feats": good_text_feats,
                     "mitie_info": mitie_info,
                     "geo_info": geo_info,
+                    "mordecai_info": mordecai_info,
                     "topic_info": topic_info,
                     "full_stanford": full_stanford,
                     "parsed_sents": trees,

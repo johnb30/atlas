@@ -45,8 +45,9 @@ def add_entry(collection, text, text_feats, title, url, date, website, lang):
 
     json_friendly = to_insert
     json_friendly['_id'] = str(json_friendly['_id'])
-    for key in json_friendly['mitie_info'].keys():
-        json_friendly['mitie_info'][key] = json.dumps(json_friendly['mitie_info'][key])
+    if 'mitie_info' in json_friendly.keys():
+        for key in json_friendly['mitie_info'].keys():
+            json_friendly['mitie_info'][key] = json.dumps(json_friendly['mitie_info'][key])
     id_str = json_friendly['_id']
     json_friendly['date'] = str(json_friendly['date'])
     json_friendly['date_added'] = json_friendly['date_added'].strftime("%Y-%m-%dT%H:%M:%S")

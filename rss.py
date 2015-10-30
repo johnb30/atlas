@@ -175,7 +175,7 @@ def main(scrape_dict):
                    website, (address, lang) in scrape_dict.iteritems()]
         timeout = [r.get(9999999) for r in results]
         logger.info('Finished a scrape. {}'.format(datetime.datetime.now()))
-        time.sleep(2700)
+        time.sleep(1800)
 
 
 if __name__ == '__main__':

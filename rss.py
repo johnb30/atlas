@@ -1,10 +1,10 @@
-import pika
-import json
-import time
-import logging
 import datetime
-import utilities
+import json
+import logging
 import pattern.web
+import pika
+import time
+import utilities
 from multiprocessing import Pool
 
 
@@ -107,7 +107,7 @@ def _convert_url(url, website):
     return page_url
 
 
-def _check_redis(url, conn):
+def _check_redis(url, db_collection):
     """
     Private function to check if a URL appears in the database.
 
@@ -128,21 +128,22 @@ def _check_redis(url, conn):
             Indicates whether or not a URL was found in the database.
     """
 
-    if conn.get(url):
+    found = False
+    if db_collection.get(url):
         found = True
-    else:
-        found = False
 
     return found
 
 
 def process_whitelist(filepath):
-    url_whitelist = open(filepath, 'r').readlines()
-    url_whitelist = [line.replace('\n', '').split(',') for line in
-                     url_whitelist if line]
-    #Filtering based on list of sources from the config file
-    to_scrape = {listing[0]: [listing[1], listing[3]] for listing in
-                 url_whitelist if listing[2] in sources}
+    to_scrape = dict()
+    if filepath:
+        url_whitelist = open(filepath, 'r').readlines()
+        url_whitelist = [line.replace('\n', '').split(',') for line in
+                         url_whitelist if line]
+        #Filtering based on list of sources from the config file
+        to_scrape = {listing[0]: [listing[1], listing[3]] for listing in
+                     url_whitelist if listing[2] in config_dict.get('sources')}
 
     return to_scrape
 
@@ -165,7 +166,7 @@ def scrape_func(website, address, lang):
 
 def main(scrape_dict):
 
-    pool = Pool(pool_size)
+    pool = Pool(int(config_dict.get('pool_size')))
 
 #    redis_conn = utilities.make_redis()
 
@@ -180,9 +181,10 @@ def main(scrape_dict):
 
 if __name__ == '__main__':
     #Get the info from the config
-    db_collection, whitelist_file, sources, pool_size, log_dir, log_level, auth_db, auth_user, auth_pass = utilities.parse_config()
+    config_dict = utilities.parse_config()
     #Setup the logging
     logger = logging.getLogger('scraper_log')
+    log_level = config_dict.get('level')
     if log_level == 'info':
         logger.setLevel(logging.INFO)
     elif log_level == 'warning':
@@ -190,6 +192,7 @@ if __name__ == '__main__':
     elif log_level == 'debug':
         logger.setLevel(logging.DEBUG)
 
+    log_dir = config_dict.get('log_dir')
     if log_dir:
         fh = logging.FileHandler(log_dir, 'a')
     else:
@@ -204,7 +207,7 @@ if __name__ == '__main__':
 
     #Convert from CSV of URLs to a dictionary
     try:
-        to_scrape = process_whitelist(whitelist_file)
+        to_scrape = process_whitelist(config_dict.get('file'))
     except IOError:
         print 'There was an error. Check the log file for more information.'
         logger.warning('Could not open URL whitelist file.')

@@ -192,7 +192,7 @@ if __name__ == '__main__':
     elif log_level == 'debug':
         logger.setLevel(logging.DEBUG)
 
-    log_dir = config_dict.get('log_dir')
+    log_dir = config_dict.get('log_file')
     if log_dir:
         fh = logging.FileHandler(log_dir, 'a')
     else:

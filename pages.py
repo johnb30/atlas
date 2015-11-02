@@ -1,12 +1,12 @@
-import re
+import datetime
 import json
-import scrape
-import requests
+import mongo_connection
 # TODO: Setup logging
 # import logging
-import datetime
+import re
+import requests
+import scrape
 import utilities
-import mongo_connection
 from goose import Goose
 
 
@@ -22,7 +22,7 @@ def callback(ch, method, properties, body):
     body = json.loads(body)
     # TODO: This is bad
     try:
-        print " [x] Received {}. {}".format(body['url'],
+        print " [x] Received {}. {}".format(body.get('url'),
                                             datetime.datetime.now())
         parse_results(body, coll)
     except UnicodeEncodeError:
@@ -39,24 +39,21 @@ def parse_results(message, db_collection):
     Parameters
     ----------
 
-    rss_results: pattern.web.Results.
-                    Object containing data on the parsed RSS feed. Each item
-                    represents a unique entry in the RSS feed and contains
-                    relevant information such as the URL and title of the
-                    story.
-
-    website: String.
-                Nickname for the RSS feed being scraped.
+    message: pattern.web.Results.
+                Object containing data on the parsed RSS feed. Each item
+                represents a unique entry in the RSS feed and contains
+                relevant information such as the URL and title of the
+                story.
 
     db_collection: pymongo Collection.
                         Collection within MongoDB that in which results are
                         stored.
     """
-    lang = message['lang']
-    story_url = message['url']
-    website = message['website']
-    title = message['title']
-    date = message['date']
+    lang = message.get('lang')
+    story_url = message.get('url')
+    website = message.get('website')
+    title = message.get('title')
+    date = message.get('date')
     if lang == 'english':
         goose_extractor = Goose({'use_meta_language': False,
                                  'target_language': 'en',
@@ -73,18 +70,17 @@ def parse_results(message, db_collection):
         # the URL extracted from the bnn content.
         print('\tA BNN story.')
         text, meta, story_url = scrape.bnn_scrape(story_url, goose_extractor)
-        text = text.encode('utf-8')
     else:
         text, meta = scrape.scrape(story_url, goose_extractor)
-        text = text.encode('utf-8')
+    text = text.encode('utf-8')
 
     if text:
         cleaned_text = _clean_text(text, website)
         # Hit the hermes API
         if lang == 'english':
-            data = json.dumps({'content': text})
+            data = json.dumps({'content': cleaned_text})
             headers = {'Content-Type': 'application/json'}
-            url = 'http://52.6.20.198:5000/'
+            url = config_dict.get('hermes_api', '')
             print('\tGetting features. {}.'.format(datetime.datetime.now()))
             text_feats = requests.post(url, data=data, auth=('user',
                                                              'text2features'),
@@ -159,6 +155,10 @@ def _clean_text(text, website):
 
 
 if __name__ == '__main__':
-    db_collection, whitelist_file, sources, pool_size, log_dir, log_level, auth_db, auth_user, auth_pass = utilities.parse_config()
-    coll = utilities.make_coll(db_collection, auth_db, auth_user, auth_pass)
+    config_dict = utilities.parse_config()
+    coll = utilities.make_coll(config_dict.get('collection_list'),
+                               config_dict.get('auth_db'),
+                               config_dict.get('auth_user'),
+                               config_dict.get('auth_pass'),
+                               config_dict.get('db_server_ip'))
     main()

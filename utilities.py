@@ -74,6 +74,9 @@ def parse_config():
         for option in parser.options(section):
             config_dict[option] = parser.get(section, option)
     # handle special case of URL 'sources' comma delimited list
+    plist = config_dict.get('proxy_list')
+    config_dict['proxy_list'] = plist.split(',') if type(plist) is str else []
+    # Handle the proxy list info
     src = config_dict.get('sources')
     config_dict['sources'] = src.split(',') if type(src) is str else []
     return config_dict

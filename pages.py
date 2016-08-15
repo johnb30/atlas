@@ -4,8 +4,9 @@ import mongo_connection
 # TODO: Setup logging
 # import logging
 import re
-import requests
+import random
 import scrape
+import requests
 import utilities
 from goose import Goose
 
@@ -49,6 +50,15 @@ def parse_results(message, db_collection):
                         Collection within MongoDB that in which results are
                         stored.
     """
+    global proxies, proxy_user, proxy_pass
+
+    if proxies:
+        proxy_choice = {'http': random.choice(proxies)}
+        proxy_login = requests.auth.HTTPProxyAuth(proxy_user,
+                                                  proxy_pass)
+    else:
+        proxy_choice = ''
+        proxy_login = {}
     lang = message.get('lang')
     story_url = message.get('url')
     website = message.get('website')
@@ -71,7 +81,8 @@ def parse_results(message, db_collection):
         print('\tA BNN story.')
         text, meta, story_url = scrape.bnn_scrape(story_url, goose_extractor)
     else:
-        text, meta = scrape.scrape(story_url, goose_extractor)
+        text, meta = scrape.scrape(story_url, goose_extractor, proxy_choice,
+                                   proxy_login)
     text = text.encode('utf-8')
 
     if text:
@@ -161,4 +172,7 @@ if __name__ == '__main__':
                                config_dict.get('auth_user'),
                                config_dict.get('auth_pass'),
                                config_dict.get('db_server_ip'))
+    proxies = config_dict.get('proxy_list')
+    proxy_pass = config_dict.get('proxy_pass')
+    proxy_user = config_dict.get('proxy_user')
     main()

@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 
 
-def scrape(url, extractor, raw_html=''):
+def scrape(url, extractor, proxy_choice, proxy_login, raw_html=''):
     """
     Function to request and parse a given URL. Returns only the "relevant"
     text.
@@ -33,8 +33,13 @@ def scrape(url, extractor, raw_html=''):
 
     try:
         if not raw_html:
-            page = requests.get(url, headers=headers)
-            html = page.content
+            if proxy_login:
+                page = requests.get(url, headers=headers, proxies=proxy_choice,
+                                    auth=proxy_login)
+                html = page.content
+            else:
+                page = requests.get(url, headers=headers)
+                html = page.content
         else:
             html = raw_html
     except timeout_decorator.TimeoutError:

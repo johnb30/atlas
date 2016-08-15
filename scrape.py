@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import requests
+import timeout_decorator
 from bs4 import BeautifulSoup
 from selenium import webdriver
 
@@ -36,6 +37,9 @@ def scrape(url, extractor, raw_html=''):
             html = page.content
         else:
             html = raw_html
+    except timeout_decorator.TimeoutError:
+        print('Goose scrape timed out on URL: {}'.format(url))
+        html = ''
     except Exception, e:
         return '', ''
         print('\tProblem requesting url: {}. {}'.format(url, e))
@@ -46,6 +50,9 @@ def scrape(url, extractor, raw_html=''):
         except UnicodeDecodeError:
             article = extractor.extract(raw_html=html.decode('utf-8',
                                                              errors='replace'))
+        except timeout_decorator.TimeoutError:
+            print('Goose scrape timed out on URL: {}'.format(url))
+            article = ''
         except Exception, e:
             print('\tProblem pulling cleaned content from {}. {}'.format(url,
                                                                          e))

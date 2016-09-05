@@ -1,10 +1,11 @@
-import datetime
 import json
-import logging
-import pattern.web
 import pika
 import time
+import logging
+import argparse
+import datetime
 import utilities
+import pattern.web
 from multiprocessing import Pool
 
 
@@ -62,7 +63,8 @@ def process_rss(rss_result, message_body, redis_conn, message_queue):
                                         body=to_send,
                                         properties=pika.BasicProperties(
                                             delivery_mode=2,))
-            redis_conn.set(page_url, 1)
+            #Set the value within redis to expire in 3 days
+            redis_conn.setex(page_url, 259200, 1)
         else:
             pass
 
@@ -182,6 +184,11 @@ def main(scrape_dict):
 if __name__ == '__main__':
     #Get the info from the config
     config_dict = utilities.parse_config()
+    aparse = argparse.ArgumentParser(prog='rss')
+    aparse.add_argument('-rb', '--rabbit_conn', default='localhost')
+    aparse.add_argument('-rd', '--redis_conn', default='localhost')
+    args = aparse.parse_args()
+
     #Setup the logging
     logger = logging.getLogger('scraper_log')
     log_level = config_dict.get('level')

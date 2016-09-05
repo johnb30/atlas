@@ -200,7 +200,7 @@ if __name__ == '__main__':
 
     #Convert from CSV of URLs to a dictionary
     try:
-        to_scrape = process_whitelist(config_dict.get('file'))
+        to_scrape = process_whitelist('/src/whitelist_urls.csv')
     except IOError:
         print 'There was an error. Check the log file for more information.'
         logging.warning('Could not open URL whitelist file.')

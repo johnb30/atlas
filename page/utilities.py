@@ -47,7 +47,7 @@ def make_redis(host='localhost'):
     return r
 
 
-def make_queue(host):
+def make_queue(host='localhost'):
     connection = pika.BlockingConnection(pika.ConnectionParameters(
         host=host))
     channel = connection.channel()
@@ -73,10 +73,8 @@ def parse_config():
     for section in parser.sections():
         for option in parser.options(section):
             config_dict[option] = parser.get(section, option)
-    # handle special case of URL 'sources' comma delimited list
+    # Handle the proxy list info
     plist = config_dict.get('proxy_list')
     config_dict['proxy_list'] = plist.split(',') if type(plist) is str else []
-    # Handle the proxy list info
-    src = config_dict.get('sources')
-    config_dict['sources'] = src.split(',') if type(src) is str else []
+
     return config_dict

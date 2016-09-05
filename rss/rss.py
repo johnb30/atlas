@@ -34,12 +34,12 @@ def get_rss(address, website):
     try:
         results = pattern.web.Newsfeed().search(address, count=100,
                                                 cached=False, timeout=30)
-        logger.debug('There are {} results from {}'.format(len(results),
-                                                           website))
+        logging.debug('There are {} results from {}'.format(len(results),
+                                                            website))
     except Exception, e:
         print 'There was an error. Check the log file for more information.'
-        logger.warning('Problem fetching RSS feed for {}. {}'.format(address,
-                                                                     e))
+        logging.warning('Problem fetching RSS feed for {}. {}'.format(address,
+                                                                      e))
         results = None
 
     return results
@@ -150,11 +150,11 @@ def process_whitelist(filepath):
     return to_scrape
 
 
-def scrape_func(website, address, lang):
-    logger.info('Processing {}. {}'.format(website, datetime.datetime.now()))
+def scrape_func(website, address, lang, args):
+    logging.info('Processing {}. {}'.format(website, datetime.datetime.now()))
 
-    redis_conn = utilities.make_redis()
-    channel = utilities.make_queue()
+    redis_conn = utilities.make_redis(args['redis_conn'])
+    channel = utilities.make_queue(args['rabbit_conn'])
 
     body = {'address': address, 'website': website, 'lang': lang}
     results = get_rss(address, website)
@@ -162,61 +162,47 @@ def scrape_func(website, address, lang):
     if results:
         process_rss(results, body, redis_conn, channel)
     else:
-        logger.warning('No results for {}.'.format(website))
+        logging.warning('No results for {}.'.format(website))
         pass
 
 
-def main(scrape_dict):
+def main(scrape_dict, args):
 
-    pool = Pool(int(config_dict.get('pool_size')))
+    pool = Pool(30)
 
 #    redis_conn = utilities.make_redis()
 
     while True:
-        logger.info('Starting a new scrape. {}'.format(datetime.datetime.now()))
-        results = [pool.apply_async(scrape_func, (website, address, lang)) for
+        logging.info('Starting a new scrape. {}'.format(datetime.datetime.now()))
+        results = [pool.apply_async(scrape_func,
+                                    (website, address, lang, args)) for
                    website, (address, lang) in scrape_dict.iteritems()]
         timeout = [r.get(9999999) for r in results]
-        logger.info('Finished a scrape. {}'.format(datetime.datetime.now()))
+        logging.info('Finished a scrape. {}'.format(datetime.datetime.now()))
         time.sleep(1800)
 
 
 if __name__ == '__main__':
     #Get the info from the config
     config_dict = utilities.parse_config()
+
     aparse = argparse.ArgumentParser(prog='rss')
     aparse.add_argument('-rb', '--rabbit_conn', default='localhost')
     aparse.add_argument('-rd', '--redis_conn', default='localhost')
     args = aparse.parse_args()
 
-    #Setup the logging
-    logger = logging.getLogger('scraper_log')
-    log_level = config_dict.get('level')
-    if log_level == 'info':
-        logger.setLevel(logging.INFO)
-    elif log_level == 'warning':
-        logger.setLevel(logging.WARNING)
-    elif log_level == 'debug':
-        logger.setLevel(logging.DEBUG)
+    logging.basicConfig(format='%(levelname)s %(asctime)s: %(message)s',
+                        level=logging.INFO)
 
-    log_dir = config_dict.get('log_file')
-    if log_dir:
-        fh = logging.FileHandler(log_dir, 'a')
-    else:
-        fh = logging.FileHandler('scraping.log', 'a')
-    formatter = logging.Formatter('%(levelname)s %(asctime)s: %(message)s')
-    fh.setFormatter(formatter)
+    logging.info('Running. Processing in 45 min intervals.')
 
-    logger.addHandler(fh)
-    logger.info('Running. Processing in 45 min intervals.')
-
-    print 'Running. See log file for further information.'
+    print('Running. See log file for further information.')
 
     #Convert from CSV of URLs to a dictionary
     try:
         to_scrape = process_whitelist(config_dict.get('file'))
     except IOError:
         print 'There was an error. Check the log file for more information.'
-        logger.warning('Could not open URL whitelist file.')
+        logging.warning('Could not open URL whitelist file.')
 
-    main(to_scrape)
+    main(to_scrape, args)

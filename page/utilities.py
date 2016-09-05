@@ -41,15 +41,15 @@ def make_coll(coll_name, db_auth, db_user, db_pass, mongo_server_ip=None):
     return collection
 
 
-def make_redis():
-    r = redis.StrictRedis(host='localhost', port=6379, db=0)
+def make_redis(host='localhost'):
+    r = redis.StrictRedis(host=host, port=6379, db=0)
 
     return r
 
 
-def make_queue():
+def make_queue(host):
     connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host='localhost'))
+        host=host))
     channel = connection.channel()
 
     channel.queue_declare(queue='scraper_queue', durable=True)

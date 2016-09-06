@@ -5,6 +5,7 @@ networks:
 services:
   rss:
     image: rss
+    build: ./rss
     depends_on:
       - rabbitmq
       - redis
@@ -13,11 +14,12 @@ services:
     command: python /src/rss.py -rb=rabbitmq -rd=redis
   page:
     image: page
+    build: ./page
     depends_on: 
       - rabbitmq
     networks:
       - atlas
-    command: python /src/page.py -rb=rabbitmq
+    command: python /src/page.py -rb=rabbitmq -db=mongo
   rabbitmq:
     image: rabbitmq
     expose:
@@ -28,5 +30,11 @@ services:
     image: redis
     expose:
       - "6379"
+    networks:
+      - atlas
+  mongo:
+    image: mongo
+    expose:
+      - "27017"
     networks:
       - atlas

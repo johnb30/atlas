@@ -4,4 +4,4 @@ ADD . /src
 
 RUN pip install -r /src/requirements.txt
 
-CMD ["python", "/src/pages.py"]
+CMD ["python", "/src/page.py"]

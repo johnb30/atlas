@@ -1,12 +1,11 @@
 import glob
 import os
 import pika
-import redis
 from pymongo import MongoClient
 from ConfigParser import ConfigParser
 
 
-def make_coll(coll_name, db_auth, db_user, db_pass, mongo_server_ip=None):
+def make_coll(db_auth, db_user, db_pass, mongo_server_ip='127.0.0.1'):
     """
     Function to establish a connection to a local MonoDB instance.
 
@@ -36,15 +35,9 @@ def make_coll(coll_name, db_auth, db_user, db_pass, mongo_server_ip=None):
     if db_auth:
         connection[db_auth].authenticate(db_user, db_pass)
     db = connection.event_scrape
-    collection = db[coll_name]
+    collection = db['stories']
 
     return collection
-
-
-def make_redis(host='localhost'):
-    r = redis.StrictRedis(host=host, port=6379, db=0)
-
-    return r
 
 
 def make_queue(host='localhost'):

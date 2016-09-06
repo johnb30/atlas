@@ -1,17 +1,12 @@
 BeautifulSoup==3.2.1
 beautifulsoup4==4.3.2
 cssselect==0.9.1
-goose-extractor==1.0.22
 jieba==0.33
-kafka-python==0.9.3
-lxml==3.4.2
 nltk==3.0.0
 Pattern==2.6
 pika==0.9.14
 Pillow==2.5.3
-pymongo==2.7.2
 redis==2.10.3
 requests==2.4.1
 selenium==2.45.0
 six==1.9.0
-timeout_decorator==0.1.0

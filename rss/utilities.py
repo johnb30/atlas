@@ -2,43 +2,7 @@ import glob
 import os
 import pika
 import redis
-from pymongo import MongoClient
 from ConfigParser import ConfigParser
-
-
-def make_coll(coll_name, db_auth, db_user, db_pass, mongo_server_ip=None):
-    """
-    Function to establish a connection to a local MonoDB instance.
-
-
-    Parameters
-    ----------
-
-    coll_name: String.
-                Name of MongoDB collection to retrieve.
-
-    db_auth: String.
-                MongoDB database that should be used for user authentication.
-
-    db_user: String.
-                Username for MongoDB authentication.
-
-    db_user: String.
-                Password for MongoDB authentication.
-
-    Returns
-    -------
-
-    collection: pymongo.collection.Collection.
-                Collection within MongoDB that holds the scraped news stories.
-    """
-    connection = MongoClient(mongo_server_ip)
-    if db_auth:
-        connection[db_auth].authenticate(db_user, db_pass)
-    db = connection.event_scrape
-    collection = db[coll_name]
-
-    return collection
 
 
 def make_redis(host='localhost'):

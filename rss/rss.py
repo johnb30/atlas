@@ -143,9 +143,8 @@ def process_whitelist(filepath):
         url_whitelist = open(filepath, 'r').readlines()
         url_whitelist = [line.replace('\n', '').split(',') for line in
                          url_whitelist if line]
-        #Filtering based on list of sources from the config file
         to_scrape = {listing[0]: [listing[1], listing[3]] for listing in
-                     url_whitelist if listing[2] in config_dict.get('sources')}
+                     url_whitelist}
 
     return to_scrape
 
@@ -153,8 +152,8 @@ def process_whitelist(filepath):
 def scrape_func(website, address, lang, args):
     logging.info('Processing {}. {}'.format(website, datetime.datetime.now()))
 
-    redis_conn = utilities.make_redis(args['redis_conn'])
-    channel = utilities.make_queue(args['rabbit_conn'])
+    redis_conn = utilities.make_redis(args.redis_conn)
+    channel = utilities.make_queue(args.rabbit_conn)
 
     body = {'address': address, 'website': website, 'lang': lang}
     results = get_rss(address, website)
@@ -170,20 +169,19 @@ def main(scrape_dict, args):
 
     pool = Pool(30)
 
-#    redis_conn = utilities.make_redis()
-
     while True:
         logging.info('Starting a new scrape. {}'.format(datetime.datetime.now()))
         results = [pool.apply_async(scrape_func,
                                     (website, address, lang, args)) for
                    website, (address, lang) in scrape_dict.iteritems()]
-        timeout = [r.get(9999999) for r in results]
+        timeout = [res.get(9999999) for res in results]
         logging.info('Finished a scrape. {}'.format(datetime.datetime.now()))
         time.sleep(1800)
 
 
 if __name__ == '__main__':
     #Get the info from the config
+    time.sleep(60)
     config_dict = utilities.parse_config()
 
     aparse = argparse.ArgumentParser(prog='rss')

@@ -1,10 +1,11 @@
-import datetime
 import json
-import logging
-import pattern.web
 import pika
 import time
+import logging
+import argparse
+import datetime
 import utilities
+import pattern.web
 from multiprocessing import Pool
 
 
@@ -33,12 +34,12 @@ def get_rss(address, website):
     try:
         results = pattern.web.Newsfeed().search(address, count=100,
                                                 cached=False, timeout=30)
-        logger.debug('There are {} results from {}'.format(len(results),
-                                                           website))
+        logging.debug('There are {} results from {}'.format(len(results),
+                                                            website))
     except Exception, e:
         print 'There was an error. Check the log file for more information.'
-        logger.warning('Problem fetching RSS feed for {}. {}'.format(address,
-                                                                     e))
+        logging.warning('Problem fetching RSS feed for {}. {}'.format(address,
+                                                                      e))
         results = None
 
     return results
@@ -62,7 +63,8 @@ def process_rss(rss_result, message_body, redis_conn, message_queue):
                                         body=to_send,
                                         properties=pika.BasicProperties(
                                             delivery_mode=2,))
-            redis_conn.set(page_url, 1)
+            #Set the value within redis to expire in 3 days
+            redis_conn.setex(page_url, 259200, 1)
         else:
             pass
 
@@ -141,18 +143,17 @@ def process_whitelist(filepath):
         url_whitelist = open(filepath, 'r').readlines()
         url_whitelist = [line.replace('\n', '').split(',') for line in
                          url_whitelist if line]
-        #Filtering based on list of sources from the config file
         to_scrape = {listing[0]: [listing[1], listing[3]] for listing in
-                     url_whitelist if listing[2] in config_dict.get('sources')}
+                     url_whitelist}
 
     return to_scrape
 
 
-def scrape_func(website, address, lang):
-    logger.info('Processing {}. {}'.format(website, datetime.datetime.now()))
+def scrape_func(website, address, lang, args):
+    logging.info('Processing {}. {}'.format(website, datetime.datetime.now()))
 
-    redis_conn = utilities.make_redis()
-    channel = utilities.make_queue()
+    redis_conn = utilities.make_redis(args.redis_conn)
+    channel = utilities.make_queue(args.rabbit_conn)
 
     body = {'address': address, 'website': website, 'lang': lang}
     results = get_rss(address, website)
@@ -160,56 +161,46 @@ def scrape_func(website, address, lang):
     if results:
         process_rss(results, body, redis_conn, channel)
     else:
-        logger.warning('No results for {}.'.format(website))
+        logging.warning('No results for {}.'.format(website))
         pass
 
 
-def main(scrape_dict):
+def main(scrape_dict, args):
 
-    pool = Pool(int(config_dict.get('pool_size')))
-
-#    redis_conn = utilities.make_redis()
+    pool = Pool(30)
 
     while True:
-        logger.info('Starting a new scrape. {}'.format(datetime.datetime.now()))
-        results = [pool.apply_async(scrape_func, (website, address, lang)) for
+        logging.info('Starting a new scrape. {}'.format(datetime.datetime.now()))
+        results = [pool.apply_async(scrape_func,
+                                    (website, address, lang, args)) for
                    website, (address, lang) in scrape_dict.iteritems()]
-        timeout = [r.get(9999999) for r in results]
-        logger.info('Finished a scrape. {}'.format(datetime.datetime.now()))
+        timeout = [res.get(9999999) for res in results]
+        logging.info('Finished a scrape. {}'.format(datetime.datetime.now()))
         time.sleep(1800)
 
 
 if __name__ == '__main__':
     #Get the info from the config
+    time.sleep(60)
     config_dict = utilities.parse_config()
-    #Setup the logging
-    logger = logging.getLogger('scraper_log')
-    log_level = config_dict.get('level')
-    if log_level == 'info':
-        logger.setLevel(logging.INFO)
-    elif log_level == 'warning':
-        logger.setLevel(logging.WARNING)
-    elif log_level == 'debug':
-        logger.setLevel(logging.DEBUG)
 
-    log_dir = config_dict.get('log_file')
-    if log_dir:
-        fh = logging.FileHandler(log_dir, 'a')
-    else:
-        fh = logging.FileHandler('scraping.log', 'a')
-    formatter = logging.Formatter('%(levelname)s %(asctime)s: %(message)s')
-    fh.setFormatter(formatter)
+    aparse = argparse.ArgumentParser(prog='rss')
+    aparse.add_argument('-rb', '--rabbit_conn', default='localhost')
+    aparse.add_argument('-rd', '--redis_conn', default='localhost')
+    args = aparse.parse_args()
 
-    logger.addHandler(fh)
-    logger.info('Running. Processing in 45 min intervals.')
+    logging.basicConfig(format='%(levelname)s %(asctime)s: %(message)s',
+                        level=logging.INFO)
 
-    print 'Running. See log file for further information.'
+    logging.info('Running. Processing in 45 min intervals.')
+
+    print('Running. See log file for further information.')
 
     #Convert from CSV of URLs to a dictionary
     try:
-        to_scrape = process_whitelist(config_dict.get('file'))
+        to_scrape = process_whitelist('/src/whitelist_urls.csv')
     except IOError:
         print 'There was an error. Check the log file for more information.'
-        logger.warning('Could not open URL whitelist file.')
+        logging.warning('Could not open URL whitelist file.')
 
-    main(to_scrape)
+    main(to_scrape, args)

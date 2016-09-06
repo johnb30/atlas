@@ -1,18 +1,22 @@
-import datetime
-import json
-import mongo_connection
-# TODO: Setup logging
-# import logging
 import re
+import json
+import time
 import random
 import scrape
+import logging
+import datetime
+import argparse
 import requests
 import utilities
+import connectors
 from goose import Goose
 
 
-def main():
-    channel = utilities.make_queue()
+def main(args):
+    logging.basicConfig(format='%(levelname)s %(asctime)s: %(message)s',
+                        level=logging.INFO)
+
+    channel = utilities.make_queue(args.rabbit_conn)
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(callback, queue='scraper_queue')
     channel.start_consuming()
@@ -23,12 +27,11 @@ def callback(ch, method, properties, body):
     body = json.loads(body)
     # TODO: This is bad
     try:
-        print " [x] Received {}. {}".format(body.get('url'),
-                                            datetime.datetime.now())
+        logging.info("Received {}. {}".format(body.get('url'),
+                                              datetime.datetime.now()))
         parse_results(body, coll)
     except UnicodeEncodeError:
         pass
-    print ' \tParsed URL.'
 
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -59,6 +62,7 @@ def parse_results(message, db_collection):
     else:
         proxy_choice = ''
         proxy_login = {}
+
     lang = message.get('lang')
     story_url = message.get('url')
     website = message.get('website')
@@ -78,8 +82,11 @@ def parse_results(message, db_collection):
     if 'bnn_' in website:
         # story_url gets clobbered here because it's being replaced by
         # the URL extracted from the bnn content.
-        print('\tA BNN story.')
-        text, meta, story_url = scrape.bnn_scrape(story_url, goose_extractor)
+        #TODO: Deprecate this for now since using GhostJS is weird.
+        logging.info('A BNN story.')
+#        text, meta, story_url = scrape.bnn_scrape(story_url, goose_extractor)
+        text = ''
+        pass
     else:
         text, meta = scrape.scrape(story_url, goose_extractor, proxy_choice,
                                    proxy_login)
@@ -87,41 +94,21 @@ def parse_results(message, db_collection):
 
     if text:
         cleaned_text = _clean_text(text, website)
-        # Hit the hermes API
-        if lang == 'english':
-            data = json.dumps({'content': cleaned_text})
-            headers = {'Content-Type': 'application/json'}
-            url = config_dict.get('hermes_api', '')
-            print('\tGetting features. {}.'.format(datetime.datetime.now()))
-            text_feats = requests.post(url, data=data, auth=('user',
-                                                             'text2features'),
-                                       headers=headers).json()
-            print('\tDone getting features. {}.'.format(datetime.datetime.now()))
-            if 'message' in text_feats.keys():
-                print text_feats
-                print('\tBad text features...')
-                text_feats = {}
-
-        else:
-            print('\tNo text features...')
-            text_feats = {}
 
         # TODO: Figure out where the title, URL, and date should come from
         # TODO: Might want to pull title straight from the story since the RSS
         # feed is borked sometimes.
-        print('\tAdding entry...')
-        entry_id = mongo_connection.add_entry(db_collection, cleaned_text,
-                                              text_feats, title, story_url,
-                                              date, website, lang)
+        entry_id = connectors.add_entry(db_collection, cleaned_text, title,
+                                        story_url, date, website, lang)
         if entry_id:
             try:
-                print '\tAdded entry from {} with id {}. {}.'.format(story_url,
-                                                                     entry_id,
-                                                                     datetime.datetime.now())
+                logging.info('Added entry from {} with id {}. {}.'.format(story_url,
+                                                                          entry_id,
+                                                                          datetime.datetime.now()))
             except UnicodeDecodeError:
-                print '\tAdded entry from {}. Unicode error for id'.format(story_url)
+                logging.info('Added entry from {}. Unicode error for id'.format(story_url))
     else:
-        print('\tWARNING: No text from {}'.format(story_url))
+        logging.warning('No text from {}'.format(story_url))
 
 
 def _clean_text(text, website):
@@ -166,13 +153,20 @@ def _clean_text(text, website):
 
 
 if __name__ == '__main__':
+    time.sleep(60)
+
+    aparse = argparse.ArgumentParser(prog='rss')
+    aparse.add_argument('-rb', '--rabbit_conn', default='localhost')
+    aparse.add_argument('-db', '--db_conn', default='127.0.0.1')
+    args = aparse.parse_args()
+
     config_dict = utilities.parse_config()
-    coll = utilities.make_coll(config_dict.get('collection_list'),
-                               config_dict.get('auth_db'),
+    coll = utilities.make_coll(config_dict.get('auth_db'),
                                config_dict.get('auth_user'),
                                config_dict.get('auth_pass'),
-                               config_dict.get('db_server_ip'))
+                               args.db_conn)
     proxies = config_dict.get('proxy_list')
     proxy_pass = config_dict.get('proxy_pass')
     proxy_user = config_dict.get('proxy_user')
-    main()
+
+    main(args)

@@ -1,0 +1,40 @@
+version: '2'
+networks:
+  atlas:
+    driver: bridge
+services:
+  rss:
+    image: rss
+    build: ./rss
+    depends_on:
+      - rabbitmq
+      - redis
+    networks:
+      - atlas
+    command: python /src/rss.py -rb=rabbitmq -rd=redis
+  page:
+    image: page
+    build: ./page
+    depends_on: 
+      - rabbitmq
+    networks:
+      - atlas
+    command: python /src/page.py -rb=rabbitmq -db=mongo
+  rabbitmq:
+    image: rabbitmq
+    expose:
+      - "5672"
+    networks:
+      - atlas
+  redis:
+    image: redis
+    expose:
+      - "6379"
+    networks:
+      - atlas
+  mongo:
+    image: mongo
+    expose:
+      - "27017"
+    networks:
+      - atlas
